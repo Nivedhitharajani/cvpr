@@ -1,12 +1,8 @@
 %% build_confusion_matrix.m
-% Stand-alone confusion matrix from cached descriptors.
-% Loads a descriptor index (*.mat) from ./descriptors, ranks with a chosen
-% distance, removes self-match, and saves confusion counts + heatmap.
 
 clc; clear; close all;
 set(0,'DefaultFigureVisible','on');
 
-%% ---- SETTINGS ----
 distance   = 'chi2';                     % 'euclidean'|'chi2'|'cosine'|'manhattan'
 descDir    = fullfile(pwd,'descriptors');
 resultsDir = fullfile(pwd,'results'); if ~isfolder(resultsDir), mkdir(resultsDir); end
@@ -32,7 +28,6 @@ labels = labels(:);
 [D,N] = size(X);
 fprintf('Feature size: %d x %d (D x N)\n', D, N);
 
-%% ---- CONFUSION ----
 uniq = unique(labels);
 C = zeros(numel(uniq));
 
@@ -54,14 +49,13 @@ end
 rowSums = sum(C,2); rowSums(rowSums==0) = 1;
 Cnorm = C ./ rowSums;
 
-%% ---- PLOT & SAVE ----
 fig = figure('Name',sprintf('Confusion (top-1, %s)',distance));
 imagesc(Cnorm); axis image; colorbar;
 title(sprintf('Confusion (top-1) – %s', distance));
 set(gca,'XTick',1:numel(uniq),'XTickLabel',uniq,'XTickLabelRotation',45);
 set(gca,'YTick',1:numel(uniq),'YTickLabel',uniq);
 
-% Filenames
+
 [~, baseName, ~] = fileparts(indexFile);
 pngPath = fullfile(resultsDir, sprintf('confusion_%s_%s.png', distance, baseName));
 csvCounts = fullfile(resultsDir, sprintf('confusion_counts_%s_%s.csv', distance, baseName));
@@ -70,14 +64,12 @@ csvNorm   = fullfile(resultsDir, sprintf('confusion_normalized_%s_%s.csv', dista
 saveas(fig, pngPath);
 fprintf('Saved heatmap: %s\n', pngPath);
 
-% Save CSVs (counts and normalized)
 writecell([{''} uniq'; uniq num2cell(C)], csvCounts);
 writecell([{''} uniq'; uniq num2cell(Cnorm)], csvNorm);
 fprintf('Saved CSVs:\n  %s\n  %s\n', csvCounts, csvNorm);
 
 disp('Done.');
 
-%% ---- LOCAL DISTANCE (stand-alone; no external dependency) ----
 function d = local_compare_distance(q, X, metric)
     q = double(q(:));
     X = double(X);
