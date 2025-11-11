@@ -1,5 +1,5 @@
 function h = grid_hist_rgb(I, numBins, rc)
-% Concatenate RGB 3D histograms over an r x c grid
+
 if nargin<3, rc = [2 2]; end
 I = ensure_rgb_uint8(I);
 [hgt,wid,~] = size(I);
