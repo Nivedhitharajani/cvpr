@@ -1,12 +1,4 @@
-%% EEE3032 - Computer Vision and Pattern Recognition (ee3.cvpr)
-%%
-%% cvpr_computedescriptors.m
-%% Skeleton code provided as part of the coursework assessment
-%% This code will iterate through every image in the MSRCv2 dataset
-%% and call a function 'extractRandom' to extract a descriptor from the
-%% image.  Currently that function returns just a random vector so should
-%% be changed as part of the coursework exercise.
-%%
+
 %% (c) John Collomosse 2010  (J.Collomosse@surrey.ac.uk)
 %% Centre for Vision Speech and Signal Processing (CVSSP)
 %% University of Surrey, United Kingdom
@@ -14,17 +6,10 @@
 close all;
 clear all;
 
-%% Edit the following line to the folder you unzipped the MSRCv2 dataset to
 function quick_retrieval_demo(varargin)
-% QUICK_RETRIEVAL_DEMO - Simple retrieval viewer using precomputed descriptors.
-% Works with descriptors saved by cvpr_computedescriptors:
-%   desc/<SUBFOLDER>/<class>/<imagename>.mat   with variables: f (row vec), label, imgp
-%
-% Usage:
-%   quick_retrieval_demo                 % uses color8 and CHI2 by default
-%   quick_retrieval_demo('sub','color8_g2','metric','L1','show',15)
 
-%% --- config / args ---
+
+
 p = inputParser;
 addParameter(p,'dataset', fullfile('data','msrcv2'));  % not strictly needed; image paths stored in mats
 addParameter(p,'descroot', fullfile('desc'));          % root of all descriptor folders
@@ -134,7 +119,7 @@ title(sprintf('Query (left) then Top-%d — %s / %s', SHOW, DESCRIPTOR_SUBFOLDER
 
 end % function
 
-% ---------- local utilities ----------
+
 function im = safe_read(p)
 if ~exist(p,'file'), error('Missing image: %s', p); end
 im = imread(p);
