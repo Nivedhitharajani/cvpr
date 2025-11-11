@@ -7,9 +7,6 @@ distance   = 'chi2';                     % 'euclidean'|'chi2'|'cosine'|'manhatta
 descDir    = fullfile(pwd,'descriptors');
 resultsDir = fullfile(pwd,'results'); if ~isfolder(resultsDir), mkdir(resultsDir); end
 
-% Either hard-code the index file OR pick it interactively:
-% indexFile = fullfile(descDir,'index_bins8.mat');          % baseline
-% indexFile = fullfile(descDir,'index_grid2x2_bins8.mat');  % grid version
 [fn,fp] = uigetfile(fullfile(descDir,'*.mat'),'Select descriptor index MAT file');
 assert(~isequal(fn,0), 'No file selected.');
 indexFile = fullfile(fp,fn);
@@ -17,12 +14,11 @@ indexFile = fullfile(fp,fn);
 fprintf('Loading index: %s\n', indexFile);
 S = load(indexFile);
 
-% Robustly get X, labels, paths (support different field names if any)
+
 if isfield(S,'X'), X = S.X; else, error('Descriptor matrix X not found in MAT.'); end
 if isfield(S,'labels'), labels = S.labels; else, error('labels not found in MAT.'); end
 if isfield(S,'paths'), paths = S.paths; else, paths = []; end %#ok<NASGU>
 
-% Normalize label type
 if isstring(labels), labels = cellstr(labels); end
 labels = labels(:);
 [D,N] = size(X);
@@ -45,7 +41,7 @@ for qi = 1:N
     C(r,c) = C(r,c) + 1;
 end
 
-% Normalized (per-row) confusion for readability
+
 rowSums = sum(C,2); rowSums(rowSums==0) = 1;
 Cnorm = C ./ rowSums;
 
