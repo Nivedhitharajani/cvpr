@@ -1,0 +1,161 @@
+%% build_index_hs.m
+% Stand-alone builder for HS (Hue–Saturation) histograms.
+% - Recursively scans your dataset folder (class = parent folder name)
+% - Builds HS descriptors (nH x nS bins), saves index_*.mat in ./descriptors
+% - (Optional) Evaluates and saves PR curves for multiple distances
+
+clc; clear; close all;
+set(0,'DefaultFigureVisible','on');
+
+%% ===== SETTINGS =====
+% Point this at the SAME dataset you used before (20 class folders under it)
+datasetRoot = fullfile(pwd, 'data', 'msrc_objcategimagedatabase_v2');  % <- change if needed
+
+nH = 16;                 % Hue bins
+nS = 8;                  % Saturation bins  (total dims = nH*nS)
+doEval = true;           % set false if you only want to build the index
+distList = {'chi2','euclidean','cosine','manhattan'};
+numQueries = 50;         % for evaluation (increase for stability)
+rng(0);
+
+%% ===== PREP =====
+assert(isfolder(datasetRoot), 'Dataset folder not found: %s', datasetRoot);
+descDir = fullfile(pwd,'descriptors');    if ~isfolder(descDir), mkdir(descDir); end
+resultsDir = fullfile(pwd,'results');     if ~isfolder(resultsDir), mkdir(resultsDir); end
+
+% Make an unambiguous index filename
+indexFile = fullfile(descDir, sprintf('index_hs%dx%d.mat', nH, nS));
+
+%% ===== SCAN DATASET =====
+[paths, labels] = listImagesWithLabels(datasetRoot);
+assert(~isempty(paths), 'No images found under %s', datasetRoot);
+
+%% ===== BUILD FEATURES (HS) =====
+fprintf('Building HS histograms (%dx%d) for %d images...\n', nH, nS, numel(paths));
+f1 = hs_hist(imread(paths{1}), nH, nS);
+D  = numel(f1); N = numel(paths);
+X  = zeros(D, N, 'single');
+
+t0 = tic;
+for i = 1:N
+    I = imread(paths{i});
+    X(:,i) = hs_hist(I, nH, nS);
+    if mod(i, max(1, floor(N/20)))==0
+        fprintf('  %d/%d\n', i, N);
+    end
+end
+fprintf('Done in %.1fs. Dim = %d\n', toc(t0), D);
+
+%% ===== SAVE INDEX =====
+save(indexFile, 'paths','labels','X','nH','nS','-v7.3');
+fprintf('Saved: %s\n', indexFile);
+
+%% ===== OPTIONAL EVALUATION =====
+if doEval
+    fprintf('Evaluating distances on HS features...\n');
+    qi_list = randi(N, [1, numQueries]);   % fixed query set for fair compare
+    resultsCSV = fullfile(resultsDir, sprintf('summary_distance_sweep_HS%dx%d.csv', nH, nS));
+    fid = fopen(resultsCSV,'w'); fprintf(fid, "distance,meanAP\n");
+    for k = 1:numel(distList)
+        metric = distList{k};
+        [mP, mR, mAP] = eval_macro_pr(X, labels, metric, qi_list);
+        fig = figure('Name', sprintf('Macro PR (HS %dx%d, %s)', nH, nS, metric));
+        plot(mR, mP, 'LineWidth',2); grid on;
+        xlabel('Recall'); ylabel('Precision');
+        title(sprintf('Macro PR – HS %dx%d (%s), mAP=%.3f', nH, nS, metric, mAP));
+        outPNG = fullfile(resultsDir, sprintf('PR_macro_HS%dx%d_%s.png', nH, nS, metric));
+        saveas(fig, outPNG);
+        fprintf('Saved PR: %s\n', outPNG);
+        fprintf(fid, "%s,%.6f\n", metric, mAP);
+    end
+    fclose(fid);
+    fprintf('Saved sweep summary: %s\n', resultsCSV);
+end
+
+disp('HS build complete.');
+
+%% ====== LOCAL HELPERS ======
+
+function [paths, labels] = listImagesWithLabels(root)
+S = dir(fullfile(root, '**', '*.*'));
+S = S(~[S.isdir]);
+valid = endsWith(lower({S.name}), {'.jpg','.jpeg','.png','.bmp','.tif','.tiff'});
+S = S(valid);
+paths = fullfile({S.folder}, {S.name})';
+labels = cell(numel(paths),1);
+for i=1:numel(paths)
+    labels{i} = parentFolder(paths{i});
+end
+end
+
+function p = parentFolder(f)
+[folder,~,~] = fileparts(f);
+[~,p] = fileparts(folder);
+end
+
+function [mP, mR, mAP] = eval_macro_pr(X, labels, metric, qi_list)
+allPrec = []; allRec = []; AP = zeros(numel(qi_list),1);
+for t = 1:numel(qi_list)
+    qi = qi_list(t);
+    q = X(:,qi);
+    d = local_compare_distance(q, X, metric);
+    [~, order] = sort(d,'ascend');
+    isRel = strcmp(labels(order), labels{qi});
+    [p, r] = pr_curve(isRel);
+    [allPrec, allRec] = padcat_cols(allPrec, allRec, p, r);
+    AP(t) = average_precision(isRel);
+end
+[mP, mR] = macro_average_pr(allPrec, allRec);
+mAP = mean(AP,'omitnan');
+end
+
+function ap = average_precision(isRel)
+isRel = isRel(:);
+tp = cumsum(isRel);
+k  = (1:numel(isRel))';
+prec = tp ./ k;
+ap = sum(prec(isRel)) / max(1,sum(isRel));
+end
+
+function [mp, mr] = macro_average_pr(allPrec, allRec)
+rg = (0:0.01:1)'; P = nan(numel(rg), size(allPrec,2));
+for i=1:size(allPrec,2)
+    p = allPrec(:,i); r = allRec(:,i);
+    m = ~isnan(p) & ~isnan(r);
+    p = p(m); r = r(m);
+    if isempty(p), continue; end
+    [r, iu] = unique(r); p = p(iu);
+    P(:,i) = interp1(r, p, rg, 'previous', 'extrap');
+end
+mp = nanmean(P,2); mr = rg;
+end
+
+function [A, B] = padcat_cols(A, B, v1, v2)
+if isempty(A), A=v1; B=v2; return; end
+m = size(A,1);
+if numel(v1)>m
+    A=[A; nan(numel(v1)-m, size(A,2))];
+    B=[B; nan(numel(v1)-m, size(B,2))];
+elseif numel(v1)<m
+    v1=[v1; nan(m-numel(v1),1)];
+    v2=[v2; nan(m-numel(v2),1)];
+end
+A=[A, v1]; B=[B, v2];
+end
+
+function d = local_compare_distance(q, X, metric)
+q = double(q(:)); X = double(X);
+switch lower(metric)
+    case 'euclidean'
+        dif = X - q; d = sqrt(sum(dif.^2,1));
+    case 'manhattan'
+        d = sum(abs(X - q),1);
+    case 'chi2'
+        num = (X - q).^2; den = (X + q + eps); d = 0.5*sum(num./den,1);
+    case 'cosine'
+        num = q' * X; d = 1 - (num ./ (norm(q)*sqrt(sum(X.^2,1)) + eps));
+    otherwise
+        error('Unknown distance: %s', metric);
+end
+d = d(:);
+end
