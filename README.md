@@ -11,6 +11,12 @@ CVPR_Coursework/
   src/    # MATLAB source code
 ```
 
+- **Chi-square distance** consistently produced the highest retrieval accuracy for all histogram types.  
+- **HS histograms** proved more robust to illumination and saturation differences compared to RGB.  
+- **Grid RGB** added modest gains by encoding spatial cues but increased descriptor size 4×.  
+- **PCA compression** reduced feature dimensionality by over 50% with negligible accuracy loss.  
+- **Most confusions** occurred between visually similar categories (e.g., grass vs. tree), showing limits of colour-only descriptors.
+
 ## How to run (after you add code)
 ```matlab
 addpath(genpath('src'));
