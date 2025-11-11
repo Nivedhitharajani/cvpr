@@ -3,11 +3,11 @@
 clc; clear; close all;
 
 set(0,'DefaultFigureVisible','on');  % show figures
-dbstop if error;                     % break on any error
+dbstop if error;                     
 fprintf('CWD: %s\n', pwd);
 fprintf('About to build/load features...\n');
 
-datasetRoot = fullfile(pwd, 'data', 'msrc_objcategimagedatabase_v2'); % <-- change if needed
+datasetRoot = fullfile(pwd, 'data', 'msrc_objcategimagedatabase_v2'); 
 numBins     = 32;          % per channel (8 -> 512-D 3D hist)
 distance    = 'manhattan';% 'euclidean' | 'chi2' | 'cosine' | 'manhattan'
 topK        = 20;         % images to display
