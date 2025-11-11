@@ -1,14 +1,8 @@
 %% build_index_hs.m
-% Stand-alone builder for HS (Hue–Saturation) histograms.
-% - Recursively scans your dataset folder (class = parent folder name)
-% - Builds HS descriptors (nH x nS bins), saves index_*.mat in ./descriptors
-% - (Optional) Evaluates and saves PR curves for multiple distances
 
 clc; clear; close all;
 set(0,'DefaultFigureVisible','on');
 
-%% ===== SETTINGS =====
-% Point this at the SAME dataset you used before (20 class folders under it)
 datasetRoot = fullfile(pwd, 'data', 'msrc_objcategimagedatabase_v2');  % <- change if needed
 
 nH = 16;                 % Hue bins
@@ -18,19 +12,16 @@ distList = {'chi2','euclidean','cosine','manhattan'};
 numQueries = 50;         % for evaluation (increase for stability)
 rng(0);
 
-%% ===== PREP =====
 assert(isfolder(datasetRoot), 'Dataset folder not found: %s', datasetRoot);
 descDir = fullfile(pwd,'descriptors');    if ~isfolder(descDir), mkdir(descDir); end
 resultsDir = fullfile(pwd,'results');     if ~isfolder(resultsDir), mkdir(resultsDir); end
 
-% Make an unambiguous index filename
+
 indexFile = fullfile(descDir, sprintf('index_hs%dx%d.mat', nH, nS));
 
-%% ===== SCAN DATASET =====
 [paths, labels] = listImagesWithLabels(datasetRoot);
 assert(~isempty(paths), 'No images found under %s', datasetRoot);
 
-%% ===== BUILD FEATURES (HS) =====
 fprintf('Building HS histograms (%dx%d) for %d images...\n', nH, nS, numel(paths));
 f1 = hs_hist(imread(paths{1}), nH, nS);
 D  = numel(f1); N = numel(paths);
@@ -46,7 +37,6 @@ for i = 1:N
 end
 fprintf('Done in %.1fs. Dim = %d\n', toc(t0), D);
 
-%% ===== SAVE INDEX =====
 save(indexFile, 'paths','labels','X','nH','nS','-v7.3');
 fprintf('Saved: %s\n', indexFile);
 
@@ -73,8 +63,6 @@ if doEval
 end
 
 disp('HS build complete.');
-
-%% ====== LOCAL HELPERS ======
 
 function [paths, labels] = listImagesWithLabels(root)
 S = dir(fullfile(root, '**', '*.*'));
