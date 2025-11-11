@@ -1,12 +1,4 @@
-%% EEE3032 - Computer Vision and Pattern Recognition (ee3.cvpr)
-%%
-%% cvpr_computedescriptors.m
-%% Skeleton code provided as part of the coursework assessment
-%% This code will iterate through every image in the MSRCv2 dataset
-%% and call a function 'extractRandom' to extract a descriptor from the
-%% image.  Currently that function returns just a random vector so should
-%% be changed as part of the coursework exercise.
-%%
+
 %% (c) John Collomosse 2010  (J.Collomosse@surrey.ac.uk)
 %% Centre for Vision Speech and Signal Processing (CVSSP)
 %% University of Surrey, United Kingdom
@@ -36,4 +28,5 @@ for filenum=1:length(allfiles)
     save(fout,'F');
     toc
 end
+
 
