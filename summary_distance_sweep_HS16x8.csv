@@ -1,0 +1,5 @@
+distance,meanAP
+chi2,0.953214
+euclidean,0.799874
+cosine,0.886013
+manhattan,0.944631
