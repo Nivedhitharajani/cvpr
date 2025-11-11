@@ -1,24 +1,20 @@
-%% visual_search_main.m
-% One-file visual image search baseline (RGB histogram + Euclidean/Chi2/Cosine/L1).
-% Copy this into visual_search_main.m, set datasetRoot, and press Run.
-
 clc; clear; close all;
 
-set(0,'DefaultFigureVisible','on');  % show figures
-dbstop if error;                     % break on any error
+set(0,'DefaultFigureVisible','on');  
+dbstop if error;                     
 fprintf('CWD: %s\n', pwd);
 fprintf('About to build/load features...\n');
 
 
-%% ===== USER SETTINGS =====
-datasetRoot = fullfile(pwd, 'data', 'msrc_objcategimagedatabase_v2'); % <-- change if needed
+
+datasetRoot = fullfile(pwd, 'data', 'msrc_objcategimagedatabase_v2'); 
 numBins     = 32;          % per channel (8 -> 512-D 3D hist)
-distance    = 'manhattan';% 'euclidean' | 'chi2' | 'cosine' | 'manhattan'
-topK        = 20;         % images to display
-numQueries  = 20;         % random queries for evaluation
+distance    = 'manhattan';  % 'euclidean' | 'chi2' | 'cosine' | 'manhattan'
+topK        = 20;         
+numQueries  = 20;         
 rng(0);
 
-%% ===== PREP & FEATURE CACHE =====
+
 if ~isfolder(datasetRoot)
     error('Dataset folder not found: %s', datasetRoot);
 end
@@ -65,7 +61,7 @@ assert(~isempty(X) && ~isempty(paths), 'No features/paths loaded.');
 assert(~any(isnan(X(:))), 'NaNs in X.');
 fprintf('Example path: %s\n', paths{1});
 
-%% ===== SEARCH + VISUALISE + PR EVAL =====
+
 N = numel(paths);
 allPrec = []; allRec = [];
 
@@ -123,10 +119,6 @@ function plot_confusion_from_retrieval(X, labels, metric, outpng)
     if nargin>3, saveas(gcf,outpng); end
 end
 
-
-
-
-%% ===================== LOCAL FUNCTIONS =====================
 
 function [paths, labels] = listImagesWithLabels(root)
     S = dir(fullfile(root, '**', '*.*'));
@@ -260,8 +252,6 @@ function p = parentFolder(f)
 end
 
 
-
-% --- after loading X, paths, labels ---
 distList = {'euclidean','chi2','cosine','manhattan'};
 numQueries = 50;       % increase for more stable curves
 topK = 20;
