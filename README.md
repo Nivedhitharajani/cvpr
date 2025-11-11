@@ -17,10 +17,6 @@ CVPR_Coursework/
 - **PCA compression** reduced feature dimensionality by over 50% with negligible accuracy loss.  
 - **Most confusions** occurred between visually similar categories (e.g., grass vs. tree), showing limits of colour-only descriptors.
 
-## How to run (after you add code)
-```matlab
-addpath(genpath('src'));
-% cvpr_computedescriptors('desc','color8');
-% cvpr_visualsearch('desc','color8','metric','CHI2');
-% evaluate_search('color8','CHI2',20);
+
+
 ```
