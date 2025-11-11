@@ -3,7 +3,7 @@ clc; clear; close all;
 set(0,'DefaultFigureVisible','on');
 
 descDir = fullfile(pwd,'descriptors');
-indexFile = fullfile(descDir,'index_hs16x8.mat');  % adjust name if different
+indexFile = fullfile(descDir,'index_hs16x8.mat'); 
 S = load(indexFile);
 X = S.X; labels = S.labels; paths = S.paths;
 fprintf('Loaded %d features, dim=%d\n', size(X,2), size(X,1));
@@ -13,7 +13,6 @@ fprintf('Loaded %d features, dim=%d\n', size(X,2), size(X,1));
 X = X';  % Transpose: now N x D (samples x features)
 [coeff, score, latent, ~, explained] = pca(X);
 
-% Variance explained plot
 figure;
 plot(cumsum(explained), 'LineWidth', 2);
 xlabel('Number of principal components');
