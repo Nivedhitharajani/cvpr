@@ -1,11 +1,7 @@
 %% build_index_hs.m
-% Stand-alone HS (Hue–Saturation) index + optional evaluation.
-% No external dependencies: hs_hist() is defined at the bottom.
-
 clc; clear; close all;
 set(0,'DefaultFigureVisible','on');
 
-%% ===== SETTINGS =====
 datasetRoot = fullfile(pwd, 'data', 'msrc_objcategimagedatabase_v2'); % change if needed
 nH = 16;                 % Hue bins
 nS = 8;                  % Saturation bins  -> dim = nH*nS
@@ -14,17 +10,16 @@ distList = {'chi2','euclidean','cosine','manhattan'};
 numQueries = 50;
 rng(0);
 
-%% ===== PREP =====
+
 assert(isfolder(datasetRoot), 'Dataset not found: %s', datasetRoot);
 descDir = fullfile(pwd,'descriptors'); if ~isfolder(descDir), mkdir(descDir); end
 resultsDir = fullfile(pwd,'results');   if ~isfolder(resultsDir), mkdir(resultsDir); end
 indexFile = fullfile(descDir, sprintf('index_hs%dx%d.mat', nH, nS));
 
-%% ===== SCAN DATASET =====
 [paths, labels] = listImagesWithLabels(datasetRoot);
 assert(~isempty(paths), 'No images found under %s', datasetRoot);
 
-%% ===== BUILD FEATURES (HS) =====
+
 fprintf('Building HS histograms (%dx%d) for %d images...\n', nH, nS, numel(paths));
 f1 = hs_hist(imread(paths{1}), nH, nS);     % local function below
 D  = numel(f1); N = numel(paths);
@@ -40,11 +35,9 @@ for i = 1:N
 end
 fprintf('Done in %.1fs. Dim = %d\n', toc(t0), D);
 
-%% ===== SAVE INDEX =====
 save(indexFile, 'paths','labels','X','nH','nS','-v7.3');
 fprintf('Saved: %s\n', indexFile);
 
-%% ===== OPTIONAL EVALUATION =====
 if doEval
     fprintf('Evaluating distances on HS features...\n');
     qi_list = randi(N, [1, numQueries]);
@@ -68,7 +61,6 @@ end
 
 disp('HS build complete.');
 
-%% ====================== LOCAL FUNCTIONS ======================
 
 function [paths, labels] = listImagesWithLabels(root)
 S = dir(fullfile(root, '**', '*.*'));
@@ -177,20 +169,20 @@ idx = hidx*nS + sidx + 1;           % 1..(nH*nS)
 h2d = accumarray(idx(:), 1, [nH*nS, 1]);
 h = single(h2d / (sum(h2d)+eps));
 end
-% Example: visualise one HS histogram vector `h`
-% If you have an image:
+
+
 % I = imread(<your image path>);
 % h = hs_hist(I, 16, 8);
 
 assert(isvector(h), 'h must be a 1D vector');
-h = double(h(:));                 % make column, double
+h = double(h(:));                 
 figure; bar(h); grid on;
 xlabel('HS bin index (1..nH*nS)');
 ylabel('Normalised count');
 title('HS histogram (1D bars)');
 
 % Optional: show tick labels every saturation-block
-nH = 16; nS = 8;                  % set to your settings
+nH = 16; nS = 8;                  
 xt = 1:nS:numel(h);
 xticklabels = arrayfun(@(k) sprintf('H%02d',k), 1:nH, 'UniformOutput', false);
 set(gca, 'XTick', xt, 'XTickLabel', xticklabels, 'XTickLabelRotation', 0);
